@@ -1,0 +1,13 @@
+{
+  "name": "gstep-root",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix src/main/frontend run dev",
+    "dev:both": "concurrently -k -n FRONTEND,BACKEND \"npm --prefix src/main/frontend run dev\" \"mvn -q spring-boot:run\"",
+    "build": "npm --prefix src/main/frontend run build",
+    "clean:frontend": "rm -rf src/main/frontend/node_modules src/main/frontend/node_modules/.vite src/main/frontend/package-lock.json package-lock.json src/main/frontend/vite-cache src/main/frontend/node_modules src/main/frontend/node src/main/frontend/dist"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}

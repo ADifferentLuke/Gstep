@@ -1,0 +1,28 @@
+{
+  "name": "genetics-ui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:both": "concurrently -k -n FRONTEND,BACKEND \"vite\" \"mvn -q spring-boot:run\"",
+    "build": "vite build",
+    "preview": "vite preview --strictPort --port 5173",
+    "clean:frontend": "rm -rf src/main/frontend/node_modules src/main/frontend/node_modules/.vite src/main/frontend/package-lock.json"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.0.1",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.2",
+    "@vitejs/plugin-react": "^4.3.1"
+  }
+}
