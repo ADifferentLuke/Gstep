@@ -94,7 +94,7 @@ export default function WorldSetupForm() {
       dbg('success body', body);
       const worldId = (body && (body.id || body.world || body.uuid)) || 'world';
       dbg('world id', body.id);
-      //window.location.assign(`/canvas?world=${encodeURIComponent(worldId)}`);
+      window.location.assign(`/canvas?world=${body.id}`);
     } catch (err: any) {
       setError(err?.message || 'Something went wrong.');
     } finally {
