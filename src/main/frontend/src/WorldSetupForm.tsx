@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
+const dbg = (...args: any[]) => console.log('%c[WorldSetupForm]', 'color:#38bdf8', ...args);
+
 const POST_URL = '/genetics/v1.0/world';
 const DEFAULTS = { width: 90, height: 90, depth: 90, ticksPerDay: 10 } as const;
 
@@ -13,6 +15,10 @@ function slugify(input: string) {
 }
 
 export default function WorldSetupForm() {
+  useEffect(() => {
+    dbg('mounted');
+  }, []);
+
   const [dna, setDna] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,18 +36,22 @@ export default function WorldSetupForm() {
     let cancelled = false;
     async function load() {
       try {
+        dbg('loading ecosystems.json');
         setLoadingEco(true);
         const res = await fetch('/ecosystems.json', { cache: 'no-store' });
         if (!res.ok) throw new Error(`Failed to load ecosystems.json (${res.status})`);
         const data = await res.json();
         const list: Ecosystem[] = Array.isArray(data?.ecosystems) ? data.ecosystems : [];
+        dbg('ecosystems loaded', list.map(e => e.name));
         if (!cancelled) {
           setEcosystems(list);
           setSelectedName(list[0]?.name ?? '');
         }
       } catch (err: any) {
+        dbg('failed to load ecosystems.json', err);
         if (!cancelled) setError(err?.message || 'Failed to load ecosystems.json');
       } finally {
+        dbg('load ecosystems done');
         if (!cancelled) setLoadingEco(false);
       }
     }
@@ -52,18 +62,15 @@ export default function WorldSetupForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    dbg('submit clicked', { dnaLen: dna.length, selectedName });
     if (!dna.trim()) return setError('Please paste a DNA string.');
     if (!selectedName || !Object.keys(selectedConfig).length) return setError('Please select a valid ecosystem.');
 
     const postData = {
-      world: worldSlug,
-      width: DEFAULTS.width,
-      height: DEFAULTS.height,
-      depth: DEFAULTS.depth,
-      ticksPerDay: DEFAULTS.ticksPerDay,
-      zoo: dna,
+      organism: dna,
       properties: selectedConfig,
     };
+    dbg('postData', postData);
 
     try {
       setIsSubmitting(true);
@@ -72,12 +79,22 @@ export default function WorldSetupForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(postData),
       });
+      dbg('response status', res.status);
       if (!res.ok) {
         const text = await res.text();
+        dbg('error body', text);
         throw new Error(text || `Request failed (${res.status})`);
       }
-      // Redirect after success
-      window.location.assign(`/canvas?world=${encodeURIComponent(worldSlug)}`);
+      let body: any = null;
+      try {
+        body = await res.json();
+      } catch (_) {
+        body = await res.text();
+      }
+      dbg('success body', body);
+      const worldId = (body && (body.id || body.world || body.uuid)) || 'world';
+      dbg('world id', body.id);
+      //window.location.assign(`/canvas?world=${encodeURIComponent(worldId)}`);
     } catch (err: any) {
       setError(err?.message || 'Something went wrong.');
     } finally {
@@ -143,13 +160,13 @@ export default function WorldSetupForm() {
                     <label htmlFor="dna" className="block text-sm font-medium text-white/90 mb-1">DNA</label>
                     <span className="text-xs text-white/60">{dna.length.toLocaleString()} chars</span>
                   </div>
-                  <textarea
+                  <input
                     id="dna"
+                    type="text"
                     value={dna}
                     onChange={(e) => setDna(e.target.value)}
                     placeholder="Paste genome here…"
-                    rows={1}
-                    className="w-full rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/50 px-4 py-3 font-mono text-xs resize-none input-fancy"
+                    className="w-full rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/50 px-4 py-3 font-mono text-xs input-fancy"
                   />
                 </div>
 

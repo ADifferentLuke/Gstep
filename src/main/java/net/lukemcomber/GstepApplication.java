@@ -1,17 +1,19 @@
 package net.lukemcomber;
 
-public class GstepApplication {
-    public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
+/*
+ * (c) 2025 Luke McOmber
+ * This code is licensed under MIT license (see LICENSE.txt for details)
+ */
 
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
-        while( true ){
-            try {
-                Thread.sleep(30000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class GstepApplication {
+
+
+    public static void main(String[] args) {
+
+        SpringApplication.run(GstepApplication.class, args);
     }
 }
