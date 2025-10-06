@@ -21,6 +21,16 @@ const dbg = (...args: any[]) => console.log('%c[WorldSetupForm]', 'color:#38bdf8
 
 const defaultColor = '#38bdf8';
 
+const cellColor = (type?: string): string => {
+  switch ((type || '').toLowerCase()) {
+    case 'seed':
+      return '#5b3a1e'; // dark brown for seeds
+    // Add more mappings here as new types appear
+    default:
+      return defaultColor;
+  }
+};
+
 export default function SimulationCanvas() {
   const qs = useQuery();
   const world = qs.get('world') || 'world';
@@ -36,6 +46,9 @@ export default function SimulationCanvas() {
   const [loading, setLoading] = useState<boolean>(false);
   const [err, setErr] = useState<string | null>(null);
   const [stateResponse, setStateResponse] = useState<any>(null);
+
+  const [cols, setCols] = useState<number>(gridSize);
+  const [rows, setRows] = useState<number>(gridSize);
 
   const [toast, setToast] = useState<{ msg: string; id: number } | null>(null);
   const showToast = useCallback((msg: string) => {
@@ -71,42 +84,46 @@ export default function SimulationCanvas() {
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
-    // Work in CSS pixels while rendering on a DPR-scaled canvas
     const cssW = canvas.width / dpr;
     const cssH = canvas.height / dpr;
 
-    // Reset transform and scale for crisp 1px lines
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // clear + background
+    // Background (keep consistent with dark theme; adjust if you want lighter)
     ctx.clearRect(0, 0, cssW, cssH);
-    ctx.fillStyle = '#0b1020';
+    ctx.fillStyle = '#d9e3f0';
+    //ctx.fillStyle = '#0b1020';
     ctx.fillRect(0, 0, cssW, cssH);
 
-    // compute cell size from actual canvas size
-    const cellSize = cssW / gridSize;
+    const c = Math.max(1, cols);
+    const r = Math.max(1, rows);
+    const cellW = cssW / c;
+    const cellH = cssH / r;
 
-    // faint grid (aligned to half-pixels for sharpness)
+    // Grid
     ctx.strokeStyle = 'rgba(255,255,255,0.08)';
     ctx.lineWidth = 1;
-    for (let i = 0; i <= gridSize; i++) {
-      const p = Math.floor(i * cellSize) + 0.5;
-      ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, cssH); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(cssW, p); ctx.stroke();
+    for (let i = 0; i <= c; i++) {
+      const x = Math.floor(i * cellW) + 0.5; // crisp
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, cssH); ctx.stroke();
+    }
+    for (let j = 0; j <= r; j++) {
+      const y = Math.floor(j * cellH) + 0.5;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cssW, y); ctx.stroke();
     }
 
-    // draw squares
+    // Cells
     positions.forEach((p) => {
       let x:number, y:number, color:string|undefined;
       if (Array.isArray(p)) { [x, y, color] = p as [number, number, (string|undefined)]; }
       else { x = p.x; y = p.y; color = p.color; }
       if (typeof x !== 'number' || typeof y !== 'number') return;
-      const px = Math.floor(x * cellSize);
-      const py = Math.floor((gridSize - 1 - y) * cellSize); // invert y so 0 is bottom
+      const px = Math.floor(x * cellW);
+      const py = Math.floor((r - 1 - y) * cellH); // invert Y so 0 is bottom
       ctx.fillStyle = color || defaultColor;
-      ctx.fillRect(px, py, Math.ceil(cellSize), Math.ceil(cellSize));
+      ctx.fillRect(px, py, Math.ceil(cellW), Math.ceil(cellH));
     });
-  }, [gridSize]);
+  }, [cols, rows]);
 
   const fetchState = useCallback(async () => {
     setLoading(true); setErr(null);
@@ -123,9 +140,30 @@ export default function SimulationCanvas() {
       }
       let body: any = null;
       try { body = await res.json(); } catch { body = await res.text(); }
-      dbg(body);
-      //setStateResponse(body);
-      // NOTE: when your endpoint starts returning positions, you can call draw(body.positions)
+      dbg('state body', body);
+      setStateResponse(body);
+
+      // Update counters from state response
+      if (typeof body?.currentTick === 'number') setTick(body.currentTick);
+      if (typeof body?.totalDays === 'number') setDay(body.totalDays);
+      if (typeof body?.totalTicks === 'number') setTotalTicks(body.totalTicks);
+
+      // Use backend-provided grid size (fallback to existing gridSize)
+      const nextCols = Math.max(1, Number(body?.width) || gridSize);
+      const nextRows = Math.max(1, Number(body?.height) || gridSize);
+      setCols(nextCols);
+      setRows(nextRows);
+
+      // Map cells -> draw positions
+      const positions = Array.isArray(body?.cells)
+        ? (body.cells as Array<{x:number;y:number;type?:string}>).map((c) => ({
+            x: c.x,
+            y: c.y,
+            color: cellColor(c.type),
+          }))
+        : [];
+
+      draw(positions);
     } catch (e: any) {
       const m = e?.message || 'Failed to fetch state';
       setErr(m);
@@ -133,7 +171,7 @@ export default function SimulationCanvas() {
     } finally {
       setLoading(false);
     }
-  }, [world, showToast]);
+  }, [world, showToast, draw, gridSize]);
 
   const fetchFrame = useCallback(async (n: number) => {
     setLoading(true); setErr(null);
@@ -147,8 +185,8 @@ export default function SimulationCanvas() {
       const data = await res.json();
       const positions = (data?.positions ?? []) as any[];
       draw(positions);
-      if (typeof data?.tick === 'number') setTick(data.tick);
-      if (typeof data?.day === 'number') setDay(data.day);
+      if (typeof (data?.currentTick ?? data?.tick) === 'number') setTick(data.currentTick ?? data.tick);
+      if (typeof (data?.totalDays ?? data?.day) === 'number') setDay(data.totalDays ?? data.day);
       if (typeof data?.totalTicks === 'number') setTotalTicks(data.totalTicks);
       if (data?.metadata && typeof data.metadata === 'object') setMetadata(data.metadata);
       if (data?.counters && typeof data.counters === 'object') setCounters(data.counters);

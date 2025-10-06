@@ -12,9 +12,7 @@ import net.lukemcomber.genetics.biology.Cell;
 import net.lukemcomber.genetics.biology.Organism;
 import net.lukemcomber.genetics.io.CellHelper;
 import net.lukemcomber.genetics.model.TemporalCoordinates;
-import net.lukemcomber.genetics.world.terrain.Terrain;
 import net.lukemcomber.model.CellLocation;
-import net.lukemcomber.model.responses.CreateWorldResponse;
 import net.lukemcomber.model.responses.FullWorldStateResponse;
 import net.lukemcomber.service.SimulationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +22,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-
-import static net.lukemcomber.genetics.io.CellHelper.getAllOrganismsCells;
 
 @RestController
 @RequestMapping("genetics")
