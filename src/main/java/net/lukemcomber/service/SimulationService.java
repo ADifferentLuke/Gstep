@@ -1,5 +1,12 @@
 package net.lukemcomber.service;
 
+/*
+ * (c) 2025 Luke McOmber
+ * This code is licensed under MIT license (see LICENSE.txt for details)
+ */
+
+
+
 import net.lukemcomber.genetics.SteppableEcosystem;
 import net.lukemcomber.genetics.model.SpatialCoordinates;
 import net.lukemcomber.genetics.model.UniverseConstants;
@@ -11,7 +18,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class SimulationService {
@@ -22,8 +29,7 @@ public class SimulationService {
     public static final String DEFAULT_NAME = "GstepSimulation";
 
 
-    private static final Object Lock = new Object();
-    private static SteppableEcosystem ecosystem = null;
+    private final static ConcurrentHashMap<String, SteppableEcosystem> ecosystems = new ConcurrentHashMap<>();
 
     public String create(final CreateWorldRequest request) throws IOException {
 
@@ -34,22 +40,25 @@ public class SimulationService {
 
         startingOrganisms.put(midPoint, request.dna);
 
-        synchronized (Lock) {
 
-            if (Objects.isNull(ecosystem)) {
-                ecosystem = new SteppableEcosystem(properties,
-                        SteppableEcosystemConfiguration.builder()
-                                .ticksPerTurn(1)
-                                .ticksPerDay(TICKS_PER_DAY)
-                                .size(initialSize)
-                                .name(DEFAULT_NAME)
-                                .startOrganisms(startingOrganisms)
-                                .build());
+        final SteppableEcosystem ecosystem = new SteppableEcosystem(properties,
+                SteppableEcosystemConfiguration.builder()
+                        .ticksPerTurn(1)
+                        .ticksPerDay(TICKS_PER_DAY)
+                        .size(initialSize)
+                        .name(DEFAULT_NAME)
+                        .startOrganisms(startingOrganisms)
+                        .build());
 
-                ecosystem.initialize(() -> null);
-            }
-        }
+        ecosystems.put(ecosystem.getId(), ecosystem);
+
+        ecosystem.initialize(() -> null);
+
         return ecosystem.getId();
+    }
+
+    public SteppableEcosystem get(final String id) {
+        return ecosystems.get(id);
     }
 
 }

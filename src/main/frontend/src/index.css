@@ -68,7 +68,7 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* Prevent scrollbars */
+  overflow: auto; /* Allow scrollbars when needed */
 }
 
 .canvas-container {
@@ -87,4 +87,14 @@ canvas {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+}
+
+@layer components {
+  /* Shared surfaces & elements to keep pages consistent */
+  .card-surface { @apply rounded-2xl shadow-xl ring-1 ring-white/10 bg-white/10 backdrop-blur-sm; }
+  .input-surface { @apply rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/50 px-4 py-2.5; }
+  .label-muted { @apply text-white/60; }
+  .stats-label { @apply text-white/60; }
+  .btn-primary { @apply inline-flex items-center justify-center rounded-2xl px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 ring-1 ring-white/10 disabled:opacity-60 focus-visible:outline-none; }
+  .btn-primary:hover { @apply opacity-90; }
 }
