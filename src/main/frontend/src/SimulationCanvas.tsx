@@ -25,6 +25,12 @@ const cellColor = (type?: string): string => {
   switch ((type || '').toLowerCase()) {
     case 'seed':
       return '#5b3a1e'; // dark brown for seeds
+    case 'leaf':
+      return '#22c55e'; // vibrant green
+    case 'stem':
+      return '#6b8e23'; // changed to olive green
+    case 'root':
+      return '#f59e0b'; // amber
     // Add more mappings here as new types appear
     default:
       return defaultColor;
@@ -37,7 +43,7 @@ export default function SimulationCanvas() {
   const canvasSize = Math.max(200, Math.min(1200, Number(qs.get('size')) || 720));
   const gridSize = Math.max(2, Number(qs.get('grid')) || 90);
 
-  const [step, setStep] = useState<number>(1);
+  const [stepInput, setStepInput] = useState<string>('1');
   const [tick, setTick] = useState<number>(0);
   const [day, setDay] = useState<number>(0);
   const [totalTicks, setTotalTicks] = useState<number>(0);
@@ -173,6 +179,31 @@ export default function SimulationCanvas() {
     }
   }, [world, showToast, draw, gridSize]);
 
+  const tickWorld = useCallback(async (n: number): Promise<boolean> => {
+    setLoading(true); setErr(null);
+    const ticks = Math.max(1, Number(n) || 1);
+    try {
+      const url = `/genetics/v1/tick/${encodeURIComponent(world)}?ticks=${ticks}`;
+      const res = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `Request failed (${res.status})`);
+      }
+      let body: any = null;
+      try { body = await res.json(); } catch { body = await res.text(); }
+      dbg('tick body', body);
+      // NOTE: when the endpoint returns simulation state or positions, we can update the canvas here.
+      return true;
+    } catch (e: any) {
+      const m = e?.message || 'Failed to tick world';
+      setErr(m);
+      showToast(m);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [world, showToast]);
+
   const fetchFrame = useCallback(async (n: number) => {
     setLoading(true); setErr(null);
     try {
@@ -263,12 +294,13 @@ export default function SimulationCanvas() {
                   type="number"
                   min={1}
                   step={1}
-                  value={step}
-                  onChange={(e)=> setStep(Math.max(1, Number(e.target.value)||1))}
+                  value={stepInput}
+                  onChange={(e)=> setStepInput(e.target.value)}
+                  onBlur={(e)=> { const v = e.currentTarget.value; if (v === '' || Number(v) < 1) setStepInput('1'); }}
                   className="w-24 input-fancy px-2 py-1 text-sm"
                 />
                 <button
-                  onClick={()=> fetchState()}
+                  onClick={async ()=> { const n = Math.max(1, Number(stepInput) || 1); const ok = await tickWorld(n); if (ok) { await fetchState(); } }}
                   disabled={loading}
                   className="glow-gradient inline-flex items-center justify-center rounded-2xl px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 ring-1 ring-white/10 hover:opacity-90 disabled:opacity-60 focus-visible:outline-none"
                 >
