@@ -48,7 +48,7 @@ export default function SimulationCanvas() {
   const [day, setDay] = useState<number>(0);
   const [totalTicks, setTotalTicks] = useState<number>(0);
   const [metadata, setMetadata] = useState<Record<string, any>>({});
-  const [counters, setCounters] = useState<Record<string, number>>({});
+  const [counters, setCounters] = useState<Record<string, number | string>>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [err, setErr] = useState<string | null>(null);
   const [stateResponse, setStateResponse] = useState<any>(null);
@@ -64,6 +64,26 @@ export default function SimulationCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Map a mouse event on the canvas to grid cell coordinates (x,y)
+  const getCellFromEvent = (evt: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const cssX = evt.clientX - rect.left;
+    const cssY = evt.clientY - rect.top;
+    const c = Math.max(1, cols);
+    const r = Math.max(1, rows);
+    const cellW = rect.width / c;
+    const cellH = rect.height / r;
+    if (cellW <= 0 || cellH <= 0) return null;
+    const col = Math.floor(cssX / cellW);
+    const rowFromTop = Math.floor(cssY / cellH);
+    const y = r - 1 - rowFromTop; // invert to match drawing space
+    const x = col;
+    if (x < 0 || y < 0 || x >= c || y >= r) return null;
+    return { x, y };
+  };
 
   const syncCanvasSize = useCallback(() => {
     const canvas = canvasRef.current;
@@ -313,7 +333,7 @@ if (leaves.length > 0) {
   // draw a single tapered frond from center toward a target point (slightly inset from the corner)
   const drawFrond = (cx:number, cy:number, tx:number, ty:number) => {
     // inset the tip a bit to avoid sharp star-like points
-    const insetT = 0.92; // 92% toward the corner
+    const insetT = 0.90; // 90% toward the corner (was 0.92)
     const ix = cx + (tx - cx) * insetT;
     const iy = cy + (ty - cy) * insetT;
 
@@ -351,6 +371,16 @@ if (leaves.length > 0) {
     const c2y = cy + uy * (len * 0.45) - py * (half * 0.55);
     ctx.quadraticCurveTo(c2x, c2y, ax, ay);
     ctx.closePath();
+    ctx.fill();
+
+    // Rounded tip cap to soften the point
+    const tipR = Math.max(1.5, minDim * 0.07);
+    const tipGrad = ctx.createRadialGradient(bx, by, 0, bx, by, tipR);
+    tipGrad.addColorStop(0, '#bbf7d0'); // very light green highlight at the tip
+    tipGrad.addColorStop(1, '#16a34a'); // blend into main leaf color
+    ctx.fillStyle = tipGrad;
+    ctx.beginPath();
+    ctx.arc(bx, by, tipR, 0, Math.PI * 2);
     ctx.fill();
 
     // subtle outline
@@ -491,6 +521,60 @@ if (leaves.length > 0) {
     }
   }, [world, showToast]);
 
+  const probeCell = useCallback(async (x: number, y: number) => {
+    setLoading(true); setErr(null);
+    try {
+      // New inspect endpoint (rename if needed later)
+      const url = `/genetics/v1/inspect/${encodeURIComponent(world)}?x=${x}&y=${y}`;
+      const res = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `Inspect failed (${res.status})`);
+      }
+      let body: any = null;
+      try { body = await res.json(); } catch { body = await res.text(); }
+      dbg('cell inspect', {x, y, body});
+
+      // Terrain → Metadata (humanize UPPER_SNAKE_CASE keys to Title Case) and store coordinates
+      if (body && typeof body === 'object' && body.terrain && typeof body.terrain === 'object') {
+        const humanized: Record<string, any> = {};
+        Object.entries(body.terrain as Record<string, any>).forEach(([k, v]) => {
+          const label = k
+            .replace(/_/g, ' ')
+            .toLowerCase()
+            .replace(/\b\w/g, (c) => c.toUpperCase()); // Title Case
+          humanized[label] = v;
+        });
+        setMetadata(prev => ({ ...prev, ...humanized, x, y }));
+      } else {
+        // still record coordinates even if no terrain object
+        setMetadata(prev => ({ ...prev, x, y }));
+      }
+
+      // Cell → Counters (no prefix, do not add coordinates)
+      if (body && typeof body === 'object' && body.cell && typeof body.cell === 'object') {
+        const cellObj = body.cell as Record<string, any>;
+        const merged: Record<string, number | string> = {};
+        Object.entries(cellObj).forEach(([k, v]) => {
+          merged[k] = (typeof v === 'number' || typeof v === 'string') ? v : JSON.stringify(v);
+        });
+        setCounters(prev => ({ ...prev, ...merged }));
+      }
+    } catch (e:any) {
+      const m = e?.message || 'Failed to inspect cell';
+      setErr(m);
+      showToast(m);
+    } finally {
+      setLoading(false);
+    }
+  }, [world, showToast]);
+
+  const handleCanvasClick = useCallback((evt: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+    const cell = getCellFromEvent(evt);
+    if (!cell) return;
+    probeCell(cell.x, cell.y);
+  }, [getCellFromEvent, probeCell]);
+
   const fetchFrame = useCallback(async (n: number) => {
     setLoading(true); setErr(null);
     try {
@@ -507,7 +591,7 @@ if (leaves.length > 0) {
       if (typeof (data?.totalDays ?? data?.day) === 'number') setDay(data.totalDays ?? data.day);
       if (typeof data?.totalTicks === 'number') setTotalTicks(data.totalTicks);
       if (data?.metadata && typeof data.metadata === 'object') setMetadata(data.metadata);
-      if (data?.counters && typeof data.counters === 'object') setCounters(data.counters);
+      if (data?.counters && typeof data.counters === 'object') setCounters(data.counters as Record<string, number | string>);
     } catch (e:any) {
       const m = e?.message || 'Failed to fetch frame';
       setErr(m);
@@ -569,7 +653,8 @@ if (leaves.length > 0) {
             <div ref={containerRef} className="relative w-full" style={{ height: '75vh' }}>
               <canvas
                 ref={canvasRef}
-                className="w-full h-full rounded-xl border border-white/20 bg-black"
+                onClick={handleCanvasClick}
+                className="w-full h-full rounded-xl border border-white/20 bg-black cursor-crosshair"
               />
             </div>
             {/* Footer controls */}
@@ -607,25 +692,44 @@ if (leaves.length > 0) {
         {/* Sidebar */}
         <aside className="space-y-4">
           <div className="relative card-neon rounded-2xl bg-white/5 backdrop-blur-sm ring-1 ring-white/10 shadow-xl p-4">
-            <h2 className="text-base font-semibold mb-2">Metadata</h2>
+            <h2 className="text-base font-semibold mb-2">Terrain</h2>
+            <div className="h-px w-full bg-white/10 mb-3" />
             {Object.keys(metadata).length === 0 && <p className="text-sm label-muted">—</p>}
             <dl className="space-y-1 text-sm">
-              {Object.entries(metadata).map(([k,v]) => (
-                <div key={k} className="grid grid-cols-[120px_1fr] gap-2">
-                  <dt className="label-muted truncate">{k}</dt>
-                  <dd className="font-medium break-words">{String(v)}</dd>
+              {metadata.x !== undefined && metadata.y !== undefined && (
+                <div className="grid grid-cols-[120px_1fr] gap-2">
+                  <dt className="label-muted truncate">Coordinates</dt>
+                  <dd className="font-medium break-words">({String(metadata.x)},{String(metadata.y)})</dd>
                 </div>
-              ))}
+              )}
+              {Object.entries(metadata)
+                .filter(([k]) => k !== 'x' && k !== 'y')
+                .map(([k, v]) => (
+                  <div key={k} className="grid grid-cols-[120px_1fr] gap-2">
+                    <dt className="label-muted truncate">{k}</dt>
+                    <dd className="font-medium break-words">{String(v)}</dd>
+                  </div>
+                ))}
             </dl>
           </div>
 
           <div className="relative card-neon rounded-2xl bg-white/5 backdrop-blur-sm ring-1 ring-white/10 shadow-xl p-4">
-            <h2 className="text-base font-semibold mb-2">Counters</h2>
+            <h2 className="text-base font-semibold mb-2">Biology</h2>
+            <div className="h-px w-full bg-white/10 mb-3" />
+            <h3 className="text-sm font-semibold text-white/80 mb-2 text-center">Cell</h3>
             {Object.keys(counters).length === 0 && <p className="text-sm label-muted">—</p>}
             <ul className="space-y-1 text-sm">
-              {Object.entries(counters).map(([k,v]) => (
-                <li key={k} className="flex items-center justify-between"><span className="label-muted">{k}</span><span className="font-medium">{v}</span></li>
-              ))}
+              {Object.entries(counters).map(([k, v]) => {
+                const pretty = k
+                  .replace(/([A-Z])/g, ' $1')
+                  .replace(/^./, (c) => c.toUpperCase());
+                return (
+                  <li key={k} className="flex items-center justify-between">
+                    <span className="label-muted truncate">{pretty}</span>
+                    <span className="font-medium break-words text-right">{String(v)}</span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </aside>
