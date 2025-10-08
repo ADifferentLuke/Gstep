@@ -2,24 +2,24 @@ package net.lukemcomber.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
+public class OrganismInformation {
 
-public class CellInformation {
+
+    @JsonProperty("metabolismCost")
+    public int metabolismCost;
+
+    @JsonProperty("currentEnergy")
+    public int currentEnergy;
 
     @JsonProperty("type")
     public String type;
+
+    @JsonProperty("cellCount")
+    public int cellCount;
 
     @JsonProperty("totalEnergyCollected")
     public int totalEnergyCollected;
 
     @JsonProperty("totalEnergyMetabolized")
-    public int totalEnergyMetabolized;
-
-    @JsonProperty("genes")
-    public List<String> genes;
-
-    @JsonProperty("organism")
-    public OrganismInformation organism;
-
-
+    public int totalEnergyMetabolizzd;
 }

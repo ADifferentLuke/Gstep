@@ -49,12 +49,16 @@ export default function SimulationCanvas() {
   const [totalTicks, setTotalTicks] = useState<number>(0);
   const [metadata, setMetadata] = useState<Record<string, any>>({});
   const [counters, setCounters] = useState<Record<string, number | string>>({});
+  const [organism, setOrganism] = useState<Record<string, number | string>>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [err, setErr] = useState<string | null>(null);
   const [stateResponse, setStateResponse] = useState<any>(null);
 
   const [cols, setCols] = useState<number>(gridSize);
   const [rows, setRows] = useState<number>(gridSize);
+
+  // Genome state: array of 8-char hex strings
+  const [genes, setGenes] = useState<string[]>([]);
 
   const [toast, setToast] = useState<{ msg: string; id: number } | null>(null);
   const showToast = useCallback((msg: string) => {
@@ -552,13 +556,51 @@ if (leaves.length > 0) {
       }
 
       // Cell → Counters (no prefix, do not add coordinates)
+      let genesFromCell: string[] | null = null; let organismFromCell: Record<string, any> | null = null;
       if (body && typeof body === 'object' && body.cell && typeof body.cell === 'object') {
-        const cellObj = body.cell as Record<string, any>;
+        const cellObjRaw = body.cell as Record<string, any>;
+        const cellObj: Record<string, any> = { ...cellObjRaw };
+        // If the cell object carries a `genes` array, capture it for the Genome panel and remove from counters
+        if (Array.isArray(cellObj.genes)) {
+          genesFromCell = cellObj.genes as string[];
+          delete cellObj.genes;
+        }
+        if (cellObj.organism && typeof cellObj.organism === 'object') {
+          organismFromCell = cellObj.organism as Record<string, any>;
+          delete cellObj.organism;
+        }
         const merged: Record<string, number | string> = {};
         Object.entries(cellObj).forEach(([k, v]) => {
           merged[k] = (typeof v === 'number' || typeof v === 'string') ? v : JSON.stringify(v);
         });
         setCounters(prev => ({ ...prev, ...merged }));
+      }
+
+      // Organism → dedicated state (prefer top-level, else from cell)
+      const organismSource = (body && typeof body === 'object' && body.organism && typeof body.organism === 'object')
+        ? body.organism as Record<string, any>
+        : organismFromCell;
+      if (organismSource) {
+        const org: Record<string, number | string> = {};
+        Object.entries(organismSource).forEach(([k, v]) => {
+          org[k] = (typeof v === 'number' || typeof v === 'string') ? v : JSON.stringify(v);
+        });
+        setOrganism(org);
+      } else {
+        setOrganism({});
+      }
+
+      // Genes → local state (array of 8-char hex strings). Prefer top-level `genes`, else any from cell.
+      const geneSource = (body && Array.isArray(body.genes)) ? body.genes : genesFromCell;
+      if (geneSource && Array.isArray(geneSource)) {
+        const cleaned = geneSource
+          .filter((g: any) => typeof g === 'string')
+          .map((g: string) => g.trim())
+          .filter((g: string) => /^[0-9a-fA-F]{8}$/.test(g))
+          .map((g: string) => g.toUpperCase());
+        setGenes(cleaned);
+      } else {
+        setGenes([]);
       }
     } catch (e:any) {
       const m = e?.message || 'Failed to inspect cell';
@@ -619,6 +661,21 @@ if (leaves.length > 0) {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, [syncCanvasSize, draw]);
+
+  // --- Genome helpers ---
+  const hexToBytes = (hex: string): number[] | null => {
+    if (!/^[0-9A-F]{8}$/.test(hex)) return null;
+    return [0,1,2,3].map(i => parseInt(hex.slice(i*2, i*2+2), 16));
+  };
+
+  const colorForByte = (v: number): string => {
+    // Map 0..255 to a nature-friendly green→yellow scale
+    const t = Math.max(0, Math.min(255, v)) / 255; // 0..1
+    const hue = 140 - 60 * t;   // 140 (green) → 80 (yellow-green)
+    const sat = 70;             // %
+    const light = 35 + 30 * t;  // 35% → 65%
+    return `hsl(${hue}deg ${sat}% ${light}%)`;
+  };
 
   return (
     <div className="relative min-h-screen w-full overflow-auto bg-pixel-grid bg-pixel-animated text-white">
@@ -731,6 +788,67 @@ if (leaves.length > 0) {
                 );
               })}
             </ul>
+            {/* Organism */}
+            <div className="h-px w-full bg-white/10 my-3" />
+            <h3 className="text-sm font-semibold text-white/80 mb-2 text-center">Organism</h3>
+            {Object.keys(organism).length === 0 && <p className="text-sm label-muted">—</p>}
+            <ul className="space-y-1 text-sm">
+              {Object.entries(organism).map(([k, v]) => {
+                const pretty = k
+                  .replace(/([A-Z])/g, ' $1')
+                  .replace(/^./, (c) => c.toUpperCase());
+                return (
+                  <li key={k} className="flex items-center justify-between">
+                    <span className="label-muted truncate">{pretty}</span>
+                    <span className="font-medium break-words text-right">{String(v)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+            {/* Genome */}
+            <div className="h-px w-full bg-white/10 my-3" />
+            <h3 className="text-sm font-semibold text-white/80 mb-2">Genome</h3>
+            {genes.length === 0 ? (
+              <p className="text-sm label-muted">—</p>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs label-muted">
+                  <span>Genes: {genes.length}</span>
+                  <span>Total Size: {genes.length * 4} bytes</span>
+                </div>
+                <div className="max-h-48 overflow-auto rounded-md ring-1 ring-white/10 p-2 bg-white/5">
+                  <ul className="space-y-1">
+                    {genes.map((g, idx) => {
+                      const bytes = hexToBytes(g);
+                      return (
+                        <li key={idx} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 text-xs">
+                          {/* Mini byte bars */}
+                          <div className="flex items-center gap-0.5">
+                            {bytes ? bytes.map((b, i) => (
+                              <span
+                                key={i}
+                                title={`Byte ${i}: ${b}`}
+                                className="inline-block h-3 w-3 rounded-sm border border-white/20"
+                                style={{ backgroundColor: colorForByte(b) }}
+                              />
+                            )) : null}
+                          </div>
+                          {/* Hex text, grouped */}
+                          <code className="font-mono text-white/90 truncate">{g.slice(0,2)} {g.slice(2,4)} {g.slice(4,6)} {g.slice(6,8)}</code>
+                          {/* Copy button */}
+                          <button
+                            type="button"
+                            className="justify-self-end text-[10px] px-2 py-0.5 rounded border border-white/15 hover:bg-white/10"
+                            onClick={() => { navigator.clipboard?.writeText(g).then(() => showToast(`Copied ${g}`)); }}
+                            aria-label={`Copy ${g}`}
+                          >Copy</button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </div>
+            )}
           </div>
         </aside>
       </div>

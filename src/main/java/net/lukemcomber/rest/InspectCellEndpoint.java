@@ -2,11 +2,14 @@ package net.lukemcomber.rest;
 
 import net.lukemcomber.genetics.SteppableEcosystem;
 import net.lukemcomber.genetics.biology.Cell;
+import net.lukemcomber.genetics.biology.Gene;
+import net.lukemcomber.genetics.biology.Genome;
 import net.lukemcomber.genetics.biology.Organism;
 import net.lukemcomber.genetics.model.SpatialCoordinates;
 import net.lukemcomber.genetics.world.terrain.Terrain;
 import net.lukemcomber.genetics.world.terrain.TerrainProperty;
 import net.lukemcomber.model.CellInformation;
+import net.lukemcomber.model.OrganismInformation;
 import net.lukemcomber.model.responses.FullWorldStateResponse;
 import net.lukemcomber.model.responses.InspectCellResponse;
 import net.lukemcomber.service.SimulationService;
@@ -15,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -61,7 +65,33 @@ public class InspectCellEndpoint {
                     information.totalEnergyCollected = cell.getTotalEnergyGenerated();
                     information.totalEnergyMetabolized = cell.getTotalEnergySpent();
 
+                    final Genome genome = organism.getGenome();
+                    final int sizeOfGenome = genome.getNumberOfGenes();
+                    final List<String> genes = new ArrayList<>(sizeOfGenome);
+                    for( int i = 0; i < sizeOfGenome; ++i){
+                        final Gene gene = genome.getGeneNumber(i);
+                        if( Objects.nonNull(gene)){
+                            //genes.addLast(gene.toHexString());
+                            genes.add(i,gene.toHexString());
+                        } else {
+                            throw new ArrayStoreException();
+                        }
+                    }
+                    information.genes = genes;
+
+                    final OrganismInformation organismInformation = new OrganismInformation();
+                    organismInformation.type = organism.getOrganismType();
+                    organismInformation.cellCount = organism.getCellCount();;
+                    organismInformation.currentEnergy = organism.getEnergy();
+                    organismInformation.metabolismCost = organism.getMetabolismCost();
+                    organismInformation.totalEnergyCollected = organism.getTotalEnergyHarvested();
+                    organismInformation.totalEnergyMetabolizzd = organism.getTotalEnergyMetabolized();
+
+                    information.organism = organismInformation;
+
                     response.cellInformation = information;
+
+
 
                 }
 
