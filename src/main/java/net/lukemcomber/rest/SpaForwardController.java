@@ -1,5 +1,10 @@
 package net.lukemcomber.rest;
 
+/*
+ * (c) 2025 Luke McOmber
+ * This code is licensed under MIT license (see LICENSE.txt for details)
+ */
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;

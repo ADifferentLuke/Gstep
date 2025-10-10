@@ -1,5 +1,10 @@
 package net.lukemcomber.rest;
 
+/*
+ * (c) 2025 Luke McOmber
+ * This code is licensed under MIT license (see LICENSE.txt for details)
+ */
+
 import net.lukemcomber.genetics.SteppableEcosystem;
 import net.lukemcomber.genetics.biology.Cell;
 import net.lukemcomber.genetics.biology.Gene;

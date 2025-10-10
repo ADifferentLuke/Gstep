@@ -8,13 +8,8 @@ package net.lukemcomber.model.requests;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-
-import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.DEDUCTION;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CreateWorldRequest {

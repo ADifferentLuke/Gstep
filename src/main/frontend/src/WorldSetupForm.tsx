@@ -1,3 +1,9 @@
+
+/*
+ * (c) 2025 Luke McOmber
+ * This code is licensed under MIT license (see LICENSE.txt for details)
+ */
+
 import React, { useEffect, useMemo, useState } from 'react';
 import logo from './assets/logo.png';
 
