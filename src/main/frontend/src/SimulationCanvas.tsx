@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import logo from './assets/logo.png';
 
 // Page that draws colored squares on a canvas based on positions from the backend.
 // URL params:
@@ -680,14 +681,6 @@ if (leaves.length > 0) {
   return (
     <div className="relative min-h-screen w-full overflow-auto bg-pixel-grid bg-pixel-animated text-white">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 glow-gradient opacity-30 blur-3xl"></div>
-      <div className="absolute top-4 left-4 z-50">
-        <a
-          href="/"
-          className="glow-gradient inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 ring-1 ring-white/10 hover:opacity-90 focus-visible:outline-none"
-        >
-          ←
-        </a>
-      </div>
       {toast && (
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[1000] w-[min(90vw,48rem)]">
           <div className="relative rounded-md border border-red-400/40 bg-red-500/20 backdrop-blur text-red-100 text-sm p-3 shadow-xl whitespace-pre-wrap break-words max-h-[60vh] overflow-auto pr-9">
@@ -703,6 +696,10 @@ if (leaves.length > 0) {
           </div>
         </div>
       )}
+      {/* Logo header */}
+      <div className="mx-auto max-w-6xl px-4 md:px-6 mt-4 mb-2">
+        <img src={logo} alt="Gstep Logo" className="h-20 w-auto select-none pointer-events-none" />
+      </div>
       <div className="mx-auto max-w-6xl grid grid-cols-1 md:grid-cols-[1fr_320px] gap-6 p-4 md:p-6 overflow-auto text-white">
         {/* Canvas + controls */}
         <div>
