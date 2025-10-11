@@ -13,7 +13,7 @@
 
     <groupId>net.lukemcomber</groupId>
     <artifactId>Gstep</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.0.1</version>
     <name>Gstep</name>
     <description>Genetics web app with Spring Boot backend and Vite/React frontend</description>
     <licenses>
@@ -30,6 +30,12 @@
             <timezone>-5</timezone>
         </developer>
     </developers>
+  <scm>
+    <url>https://github.com/ADifferentLuke/Gstep</url>
+    <connection>scm:git:git://github.com/ADifferentLuke/Gstep.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/ADifferentLuke/Gstep.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
 
     <properties>
         <java.version>19</java.version>
