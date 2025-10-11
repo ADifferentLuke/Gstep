@@ -13,7 +13,7 @@
 
     <groupId>net.lukemcomber</groupId>
     <artifactId>Gstep</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>Gstep</name>
     <description>Genetics web app with Spring Boot backend and Vite/React frontend</description>
     <licenses>
@@ -52,6 +52,19 @@
             <url>https://maven.pkg.github.com/ADifferentLuke/Gstep</url>
         </snapshotRepository>
     </distributionManagement>
+    <repositories>
+        <repository>
+            <id>github</id>
+            <name>Luke Packages</name>
+            <url>https://maven.pkg.github.com/ADifferentLuke/Genetics</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
