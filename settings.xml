@@ -13,7 +13,7 @@
                 <repository>
                     <id>github</id>
                     <name>Luke GitHub</name>
-                    <url>https://maven.pkg.github.com/ADifferentLuke/Gstep</url>
+                    <url>https://maven.pkg.github.com/ADifferentLuke/</url>
                 </repository>
             </repositories>
         </profile>
