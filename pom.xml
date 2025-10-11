@@ -13,7 +13,7 @@
 
     <groupId>net.lukemcomber</groupId>
     <artifactId>Gstep</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>Gstep</name>
     <description>Genetics web app with Spring Boot backend and Vite/React frontend</description>
     <licenses>
