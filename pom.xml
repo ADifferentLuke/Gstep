@@ -24,8 +24,10 @@
     </licenses>
     <developers>
         <developer>
-            <id>ADifferentLuke</id>
+            <id>lukemcomber</id>
             <name>Luke McOmber</name>
+            <email>luke@lukemcomber.net</email>
+            <timezone>-5</timezone>
         </developer>
     </developers>
 
@@ -44,6 +46,11 @@
             <name>GitHub ADifferentLuke Apache Maven Packages</name>
             <url>https://maven.pkg.github.com/ADifferentLuke/Gstep</url>
         </repository>
+        <snapshotRepository>
+            <id>github</id>
+            <name>GitHub ADifferentLuke Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/ADifferentLuke/Gstep</url>
+        </snapshotRepository>
     </distributionManagement>
 
     <dependencies>
