@@ -12,7 +12,7 @@
     </parent>
 
     <groupId>net.lukemcomber</groupId>
-    <artifactId>Gstep</artifactId>
+    <artifactId>gstep</artifactId>
     <version>1.0.0.1</version>
     <name>Gstep</name>
     <description>Genetics web app with Spring Boot backend and Vite/React frontend</description>
@@ -31,9 +31,9 @@
         </developer>
     </developers>
   <scm>
-    <url>https://github.com/ADifferentLuke/Gstep</url>
-    <connection>scm:git:git://github.com/ADifferentLuke/Gstep.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/ADifferentLuke/Gstep.git</developerConnection>
+    <url>https://github.com/ADifferentLuke/gstep</url>
+    <connection>scm:git:git://github.com/ADifferentLuke/gstep.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/ADifferentLuke/gstep.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
 
@@ -50,12 +50,12 @@
         <repository>
             <id>github</id>
             <name>GitHub ADifferentLuke Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/ADifferentLuke/Gstep</url>
+            <url>https://maven.pkg.github.com/ADifferentLuke/gstep</url>
         </repository>
         <snapshotRepository>
             <id>github</id>
             <name>GitHub ADifferentLuke Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/ADifferentLuke/Gstep</url>
+            <url>https://maven.pkg.github.com/ADifferentLuke/gstep</url>
         </snapshotRepository>
     </distributionManagement>
     <repositories>
