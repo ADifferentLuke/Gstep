@@ -26,14 +26,13 @@
         <npm.version>10.2.4</npm.version>
     </properties>
 
-
-<distributionManagement>
-  <repository>
-    <id>github</id>
-    <name>Gstep ADifferentLuke Apache Maven Packages</name>
-    <url>https://maven.pkg.github.com/ADifferentLuke/Gstep</url>
-  </repository>
-</distributionManagement>
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub ADifferentLuke Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/ADifferentLuke/Gstep</url>
+        </repository>
+    </distributionManagement>
 
     <dependencies>
         <dependency>
