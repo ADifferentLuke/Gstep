@@ -16,6 +16,18 @@
     <version>1.0-SNAPSHOT</version>
     <name>Gstep</name>
     <description>Genetics web app with Spring Boot backend and Vite/React frontend</description>
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>ADifferentLuke</id>
+            <name>Luke McOmber</name>
+        </developer>
+    </developers>
 
     <properties>
         <java.version>19</java.version>
