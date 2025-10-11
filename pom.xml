@@ -30,7 +30,7 @@
         <dependency>
             <groupId>net.lukemcomber</groupId>
             <artifactId>genetics</artifactId>
-            <version>1.0.4-SNAPSHOT</version>
+            <version>v0.3.2</version>
         </dependency>
         <dependency>
             <groupId>com.esotericsoftware.kryo</groupId>
