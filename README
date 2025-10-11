@@ -1,5 +1,0 @@
-	•	To start your entire stack → npm run dev:both
-	•	To run just the frontend → npm run dev
-	•	To build frontend for production → npm run build
-	•	If things ever break → npm run clean:frontend && npm --prefix src/main/frontend install
-
