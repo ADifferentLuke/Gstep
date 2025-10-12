@@ -40,8 +40,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./target/Gstep-${{ env.VERSION }}.jar
-          asset_name: Gstep-${{ env.VERSION }}.jar
+          asset_path: ./target/gstep-${{ env.VERSION }}.jar
+          asset_name: gstep-${{ env.VERSION }}.jar
           asset_content_type: application/java-archive
 
       - name: Publish to GitHub Packages Apache Maven
